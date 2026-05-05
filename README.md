@@ -1,6 +1,6 @@
-# AGROTECH 🌱
+# OILSEED CROP STRESS DETECTION AND YIELD PREDICTION SYSTEM 🌱
 
-AGROTECH is a smart agriculture monitoring and analytics dashboard designed to provide real-time insights into agricultural processes through interactive dashboards and advanced data visualization.
+Oilseed crop stress detection and yield prediction sytem  is a smart agriculture monitoring and analytics dashboard designed to provide real-time insights into agricultural processes through interactive dashboards and advanced data visualization.
 
 ## Features
 - 🏠 Interactive Home Dashboard
