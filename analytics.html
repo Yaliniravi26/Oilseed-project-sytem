@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGROTECH - Cognos Analytics</title>
+    <style>
+        :root {
+            --emerald: #15f3bb;
+            --glass: rgba(6, 22, 9, 0.95);
+            --card-border: rgba(16, 185, 129, 0.4);
+            --text-light: #ecfdf5;
+        }
+
+        body {
+            background: #020a04;
+            color: var(--text-light);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 15px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Scroll illama iruka */
+        }
+
+        .header-section { 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .header-section h2 { 
+            color: var(--emerald); 
+            text-transform: uppercase; 
+            margin: 0;
+            font-size: 1.4rem;
+            letter-spacing: 1px;
+        }
+
+        .live-indicator {
+            background: rgba(21, 243, 187, 0.1);
+            color: var(--emerald);
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            border: 1px solid var(--emerald);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--emerald);
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        /* Dashboard Container */
+        .dashboard-container {
+            flex-grow: 1;
+            width: 100%;
+            background: #fff; /* Cognos default background */
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            overflow: hidden;
+            box-shadow: 0 0 25px rgba(0,0,0,0.5);
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-section" style="position: relative; z-index: 10;">
+        <h2>📊 AGROTECH ADVANCED ANALYTICS</h2>
+        <div class="live-indicator">
+            <div class="dot"></div>
+            Live Cognos Feed
+        </div>
+    </div>
+
+    <div class="dashboard-container" style="position: relative; z-index: 10;">
+        <iframe 
+            src="https://us3.ca.analytics.ibm.com/bi/?perspective=dashboard&amp;pathRef=.my_folders%2FNew%2Bdashboard%2B5&amp;closeWindowOnLastView=true&amp;ui_appbar=false&amp;ui_navbar=false&amp;shareMode=embedded&amp;action=view&amp;mode=dashboard&amp;subView=model0000019d9c3484ab_00000002&amp;nav_filter=true" 
+            width="320" 
+            height="200" 
+            frameborder="0" 
+            gesture="media" 
+            allow="encrypted-media">
+        </iframe>
+    </div>
+
+    <script>
+    </script>

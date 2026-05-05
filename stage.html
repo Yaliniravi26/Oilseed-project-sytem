@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGROTECH - Precision Growth Analysis</title>
+    <style>
+        :root {
+            --emerald: #15f3bb;
+            --glass: rgba(6, 22, 9, 0.85); /* Slightly more transparent for BG visibility */
+            --card-border: rgba(16, 185, 129, 0.4);
+            --gold: #f3c615;
+            --text-light: #ecfdf5;
+        }
+
+        body {
+            /* BACKGROUND IMAGE ADDED HERE */
+            background: linear-gradient(rgba(2, 10, 4, 0.8), rgba(2, 10, 4, 0.8)), 
+                        url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=2000&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            
+            color: var(--text-light);
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header-section { text-align: center; margin-bottom: 30px; }
+        .header-section h2 { color: var(--emerald); letter-spacing: 2px; text-transform: uppercase; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+
+        .zone-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            max-width: 1300px;
+            margin: auto;
+        }
+
+        .zone-card {
+            background: var(--glass);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(8px); /* Optional: adds a nice frost effect over the BG */
+        }
+
+        .zone-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .zone-name { color: var(--emerald); font-weight: bold; font-size: 1.3rem; }
+        .crop-tag { border: 1px solid var(--emerald); padding: 4px 12px; border-radius: 15px; color: var(--emerald); font-size: 0.85rem; }
+
+        .stage-nav { display: flex; gap: 8px; margin: 15px 0; }
+        .stage-btn {
+            flex: 1; padding: 12px 5px; text-align: center; border-radius: 6px; font-size: 0.7rem;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: #888;
+            text-transform: uppercase; font-weight: bold;
+        }
+
+        .stage-btn.active {
+            background: var(--emerald); color: #000; border-color: var(--emerald);
+            box-shadow: 0 0 15px rgba(21, 243, 187, 0.6);
+        }
+
+        .action-plan-box {
+            background: rgba(255, 255, 255, 0.02);
+            border-left: 4px solid var(--gold);
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .plan-header { color: var(--gold); font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid rgba(243, 198, 21, 0.2); padding-bottom: 5px; }
+        
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+        .detail-label { color: var(--emerald); opacity: 0.8; font-weight: 500; }
+        .detail-val { color: #fff; text-align: right; }
+
+        .footer-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #888; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body>
+    <div class="header-section" style="position: relative; z-index: 10;">
+        <h2>🛰️ PRECISION GROWTH MONITORING</h2>
+        <p>Target: <b id="mainCropName">Coconut</b> | <span id="globalDayText" style="color:var(--emerald)">Day 1</span></p>
+    </div>
+
+    <div class="zone-grid" id="zoneContainer" style="position: relative; z-index: 10;"></div>
+
+<script>
+    // NO CHANGES TO YOUR PROGRAM LOGIC
+    const savedPlan = JSON.parse(localStorage.getItem('agrotech_plan')) || { Crop_Name: "Coconut" };
+    const plantingDate = localStorage.getItem('planting_date');
+
+    let daysElapsed = 1;
+    if (plantingDate) {
+        const start = new Date(plantingDate);
+        const today = new Date();
+        daysElapsed = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    const advisories = {
+        "Seedling": {
+            water: "15-20 Liters / Day",
+            pest: "Rhinoceros Beetle (Light)",
+            dose: "0.5kg Organic Manure / Tree",
+            general: "Ensure soil moisture stays at 60%."
+        },
+        "Vegetative": {
+            water: "30-45 Liters / Day",
+            pest: "Red Palm Weevil",
+            dose: "NPK 500g:320g:1200g per year",
+            general: "Monitor for leaf spot and pests."
+        },
+        "Flowering": {
+            water: "50-60 Liters / Day",
+            pest: "Eriophyid Mite",
+            dose: "Apply Boron 50g / Tree (Prevent Shedding)",
+            general: "Critical water demand phase."
+        },
+        "Harvest": {
+            water: "20 Liters / Day",
+            pest: "None (Post-Harvest Monitoring)",
+            dose: "Potash top-up (Optional)",
+            general: "Check for nut maturity (Brown husk)."
+        }
+    };
+
+    const stageConfig = {
+        "Coconut": [30, 365, 1825],
+        "Sunflower": [15, 45, 80],
+        "Groundnut": [20, 55, 95]
+    };
+
+    const stageNames = ["Seedling", "Vegetative", "Flowering", "Harvest"];
+    const currentCropConfig = stageConfig[savedPlan.Crop_Name] || stageConfig["Coconut"];
+
+    let activeIdx = 0;
+    if (daysElapsed <= currentCropConfig[0]) activeIdx = 0;
+    else if (daysElapsed <= currentCropConfig[1]) activeIdx = 1;
+    else if (daysElapsed <= currentCropConfig[2]) activeIdx = 2;
+    else activeIdx = 3;
+
+    const currentStageName = stageNames[activeIdx];
+    const data = advisories[currentStageName];
+
+    document.getElementById('mainCropName').innerText = savedPlan.Crop_Name;
+    document.getElementById('globalDayText').innerText = `Growth: Day ${daysElapsed} (${currentStageName})`;
+
+    const zones = ["NORTH ZONE", "SOUTH ZONE", "EAST ZONE", "WEST ZONE"];
+
+    function render() {
+        const container = document.getElementById('zoneContainer');
+        zones.forEach(zone => {
+            container.innerHTML += `
+                <div class="zone-card">
+                    <div class="zone-header">
+                        <div class="zone-name">${zone}</div>
+                        <div class="crop-tag">${savedPlan.Crop_Name}</div>
+                    </div>
+
+                    <div class="stage-nav">
+                        ${stageNames.map((name, idx) => `
+                            <div class="stage-btn ${idx === activeIdx ? 'active' : ''}">${name}</div>
+                        `).join('')}
+                    </div>
+
+                    <div class="action-plan-box">
+                        <div class="plan-header">FARMER ACTION PLAN - ${currentStageName.toUpperCase()}</div>
+                        
+                        <div class="detail-row">
+                            <div class="detail-label">💧 Water Requirement:</div>
+                            <div class="detail-val">${data.water}</div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-label">🐛 Pest Monitoring:</div>
+                            <div class="detail-val">${data.pest}</div>
+                        </div>
+
+                        <div class="detail-row">
+                            <div class="detail-label">🧪 Dosage / Fertilizer:</div>
+                            <div class="detail-val">${data.dose}</div>
+                        </div>
+
+                        <div style="margin-top:10px; font-size:0.85rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:8px; color:#aaa;">
+                            <b>Note:</b> ${data.general}
+                        </div>
+                    </div>
+
+                    <div class="footer-row">
+                        <div>Growth: Day ${daysElapsed}</div>
+                        <div style="color:var(--emerald)">● Live Feed</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    render();
+
+</script>
+</body>
+</html>

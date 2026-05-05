@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGROTECH - Live AI Assistant</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        :root {
+            --emerald: #15f3bb;
+            --glass: rgba(6, 22, 9, 0.85);
+            --card-border: rgba(16, 185, 129, 0.4);
+            --text-light: #ecfdf5;
+            --ai-blue: #3b82f6;
+            --gold: #f3c615;
+            --danger: #ff4d4d;
+        }
+
+        body { 
+            margin: 0; padding: 20px; 
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1464226184884-fa280b87c399?auto=format&fit=crop&q=80&w=2070');
+            background-size: cover; background-position: center; background-attachment: fixed;
+            color: var(--text-light); font-family: 'Segoe UI', sans-serif; min-height: 100vh;
+        }
+
+        .glass-panel { 
+            background: var(--glass); backdrop-filter: blur(15px); border-radius: 25px; 
+            padding: 30px; border: 1px solid var(--card-border); max-width: 950px; 
+            margin: 20px auto; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        .ai-header {
+            background: rgba(21, 243, 187, 0.1); border: 1px solid var(--emerald);
+            padding: 15px; border-radius: 15px; margin-bottom: 25px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .live-indicator {
+            display: inline-block; width: 10px; height: 10px; background: #ff4d4d;
+            border-radius: 50%; margin-right: 8px; animation: blink 1.5s infinite;
+        }
+        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.3;} 100% {opacity: 1;} }
+
+        #locationName { font-size: 0.95rem; color: var(--emerald); font-weight: bold; margin-top: 5px; }
+
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        
+        .search-input { 
+            width: 100%; padding: 14px; background: rgba(0,0,0,0.6); color: #fff; 
+            border: 1px solid var(--card-border); border-radius: 12px; outline: none; box-sizing: border-box;
+        }
+
+        .btn-main { 
+            width: 100%; padding: 18px; background: var(--emerald); border: none; border-radius: 50px;
+            font-weight: bold; cursor: pointer; text-transform: uppercase; color: #000; transition: 0.3s;
+        }
+        .btn-main:hover { transform: translateY(-2px); filter: brightness(1.1); }
+        .btn-main:disabled { background: #1b4b3e; opacity: 0.6; cursor: wait; }
+
+        .btn-fix {
+            background: var(--ai-blue); color: white; padding: 10px 20px; border-radius: 8px; 
+            border: none; cursor: pointer; font-size: 0.85rem; font-weight: bold;
+        }
+
+        #map { height: 250px; width: 100%; border-radius: 15px; margin-bottom: 20px; border: 1px solid var(--card-border); z-index: 1; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+        .stat-card { background: rgba(0, 0, 0, 0.4); padding: 20px; border-radius: 15px; border: 1px solid var(--card-border); text-align: center; }
+        .stat-header { font-size: 0.75rem; color: var(--emerald); text-transform: uppercase; margin-bottom: 8px; }
+        .stat-value { font-size: 1.6rem; font-weight: 800; }
+
+        .ai-insight-box {
+            background: rgba(59, 130, 246, 0.15); padding: 20px; border-radius: 15px;
+            border-left: 5px solid var(--ai-blue); margin-bottom: 25px; 
+        }
+
+        .rec-container { margin-top: 30px; padding: 20px; border: 1px solid var(--gold); border-radius: 15px; background: rgba(243, 198, 21, 0.08); }
+        .rec-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+
+        .dropdown-wrapper { position: relative; width: 100%; }
+        .search-dropdown {
+            position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+            max-height: 220px; overflow-y: auto; background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--card-border); border-radius: 12px; z-index: 20;
+        }
+        .search-dropdown div { padding: 12px; cursor: pointer; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .search-dropdown div:hover { background: var(--emerald); color: #000; }
+
+        #lockedView { display: none; text-align: center; padding: 30px; border: 2px solid var(--emerald); border-radius: 20px; background: rgba(21, 243, 187, 0.1); margin-bottom: 20px; }
+        .reset-link { color: var(--danger); cursor: pointer; text-decoration: underline; font-size: 0.85rem; display: block; margin-top: 25px; }
+    </style>
+</head>
+<body>
+
+    <div class="glass-panel">
+        <h2 style="text-align: center; color: var(--emerald); margin-top: 0; letter-spacing: 3px;">🚜 AGROTECH LIVE ANALYST</h2>
+
+        <div class="ai-header">
+            <div>
+                <span class="live-indicator"></span>
+                <span id="aiStatus" style="font-weight: bold; color: var(--emerald);">🛰️ Satellite Active</span>
+                <div id="locationName">📍 Initializing GPS...</div>
+            </div>
+            <div style="text-align: right;">
+                <div id="topTemp" style="font-size: 1.8rem; font-weight: 900; color: var(--emerald);">--°C</div>
+                <div id="liveDate" style="font-size: 0.65rem; opacity: 0.8;">--</div>
+            </div>
+        </div>
+
+        <div id="searchMode">
+            <div id="map"></div>
+            <div class="input-grid">
+                <input class="search-input" list="soilOptions" id="soilInput" placeholder="🔍 Select Soil Type">
+                <div class="dropdown-wrapper">
+                    <input class="search-input" id="cropInput" placeholder="🔍 Select Crop Name" autocomplete="off">
+                    <div id="cropDropdown" class="search-dropdown" hidden></div>
+                </div>
+                <input class="search-input" list="seedOptions" id="seedInput" placeholder="🔍 Select Seed Type">
+                
+                <datalist id="soilOptions">
+                    <option value="Black Soil"><option value="Silty"><option value="Loamy"><option value="Clay"><option value="Sandy">
+                </datalist>
+                <datalist id="seedOptions">
+                    <option value="Hybrid"><option value="Organic"><option value="Local">
+                </datalist>
+            </div>
+            <button id="analyzeBtn" class="btn-main" onclick="runAnalysis()" disabled>⌛ SYNCING WITH SATELLITE...</button>
+        </div>
+
+        <div id="lockedView">
+            <span style="color: var(--emerald); font-size: 0.8rem; text-transform: uppercase;">🟢 Active Season Monitor</span>
+            <div id="activeCropDisplay" style="font-size: 2.8rem; color: var(--emerald); font-weight: 900; text-transform: uppercase; margin: 10px 0;">--</div>
+            <p id="activeStatusText" style="opacity: 0.9; margin: 0;">Live tracking active.</p>
+            <span class="reset-link" onclick="resetPlan()">❌ Cancel & Start New Plan</span>
+        </div>
+
+        <div id="results" style="display: none; margin-top: 25px;">
+            <div class="ai-insight-box">
+                <span style="color: var(--ai-blue); font-weight: bold; font-size: 0.85rem;">🤖 AI SYSTEM INSIGHT</span>
+                <div id="aiTextContent">Analyzing environment...</div>
+                <button id="fixCurrentBtn" class="btn-fix" style="margin-top: 15px; width: 100%; display: none;" onclick="fixInputData()">📌 FIX THIS PLAN</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-header">🧪 Soil pH</div><div class="stat-value" id="resPh">--</div></div>
+                <div class="stat-card"><div class="stat-header">🌡️ Live Temp</div><div class="stat-value" id="resTemp" style="color: var(--ai-blue);">--</div></div>
+                <div class="stat-card"><div class="stat-header">💧 Moisture</div><div class="stat-value" id="resMoist">--</div></div>
+                <div class="stat-card"><div class="stat-header">🌾 Pred. Yield</div><div class="stat-value" id="resYield">--</div></div>
+                <div class="stat-card"><div class="stat-header">💰 Profit</div><div class="stat-value" id="resProfit" style="color: var(--emerald);">--</div></div>
+                <div class="stat-card"><div class="stat-header">📢 Status</div><div class="stat-value" id="resAlert">--</div></div>
+            </div>
+
+            <div id="recommendationSection" class="rec-container">
+                <h4 style="color: var(--gold); margin-top: 0;">💡 Recommendations for your Soil</h4>
+                <div id="recList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTemp = null, csvData = [], cropNames = [], map, marker, currentMatch = null;
+
+        window.onload = function() {
+            loadDataset();
+            bindCropInputEvents();
+            fetchPreciseLocation();
+        };
+
+        // --- DATASET LOADING ---
+        function loadDataset() {
+            Papa.parse("TEAM21_oilseed_three_diff_columns (2).csv", {
+                download: true, header: true, complete: (res) => {
+                    csvData = res.data || [];
+                    populateCropList();
+                }
+            });
+        }
+
+        function populateCropList() {
+            cropNames = Array.from(new Set(csvData.map(r => r.Crop_Name).filter(Boolean))).sort();
+        }
+
+        // --- MAIN ANALYSIS LOGIC ---
+        function runAnalysis() {
+            const soil = document.getElementById('soilInput').value;
+            const crop = document.getElementById('cropInput').value;
+            const seed = document.getElementById('seedInput').value;
+
+            if(!soil || !crop) { alert("Please select Soil and Crop."); return; }
+            
+            const match = csvData.find(r => r.Soil_Type === soil && r.Crop_Name === crop && r.Seed_Type === seed);
+
+            if(match) {
+                currentMatch = match;
+                document.getElementById('fixCurrentBtn').style.display = 'block';
+                document.getElementById('recommendationSection').style.display = 'block';
+                
+                updateResultsUI(match);
+                showRecommendations(soil);
+
+                // *** AUTO-SAVE TO HISTORY ***
+                saveToHistory(soil, crop, match.Yield_Prediction_kg, match.Estimated_Profit);
+
+            } else { 
+                alert("Direct match not found. Showing best alternatives."); 
+                showRecommendations(soil); 
+            }
+        }
+
+        // Function to save entry into localStorage for History page
+        function saveToHistory(soil, crop, yield, profit) {
+            let logs = JSON.parse(localStorage.getItem('agro_logs') || '[]');
+            
+            const newEntry = {
+                time: new Date().toLocaleString(),
+                soil: soil,
+                crop: crop,
+                yield: yield,
+                profit: profit
+            };
+
+            logs.unshift(newEntry); // Add to top of list
+            localStorage.setItem('agro_logs', JSON.stringify(logs));
+        }
+
+        // --- UI UPDATES ---
+        function updateResultsUI(data) {
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('resPh').innerText = data.Soil_pH;
+            document.getElementById('resTemp').innerText = currentTemp + "°C";
+            document.getElementById('resMoist').innerText = data.Soil_Moisture + "%";
+            document.getElementById('resYield').innerText = data.Yield_Prediction_kg + " kg";
+            document.getElementById('resProfit').innerText = "₹" + data.Estimated_Profit;
+            document.getElementById('resAlert').innerText = data.Alert_Level;
+            document.getElementById('resAlert').style.color = data.Alert_Level === "Green" ? "#15f3bb" : "#f3c615";
+            document.getElementById('aiTextContent').innerHTML = `Field status is <b>${data.Alert_Level}</b>. Current temp: ${currentTemp}°C. Analysis logged in History.`;
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function showRecommendations(soil) {
+            const recList = document.getElementById('recList');
+            recList.innerHTML = "";
+            let options = csvData.filter(r => r.Soil_Type === soil)
+                                .sort((a, b) => b.Estimated_Profit - a.Estimated_Profit)
+                                .slice(0, 3);
+            
+            options.forEach(opt => {
+                recList.innerHTML += `
+                <div class="rec-item">
+                    <div><b>${opt.Crop_Name}</b><br>Profit: ₹${opt.Estimated_Profit}</div>
+                    <button class="btn-fix" onclick='fixCrop(${JSON.stringify(opt)})'>FIX PLAN</button>
+                </div>`;
+            });
+        }
+
+        // --- GPS & WEATHER LOGIC ---
+        async function fetchPreciseLocation() {
+            const geoOptions = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+            document.getElementById('locationName').innerText = "🛰️ Connecting to Satellite...";
+
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => { await updateUI(pos.coords.latitude, pos.coords.longitude); },
+                    async (err) => { await ipFallback(); }, 
+                    geoOptions
+                );
+            } else { await ipFallback(); }
+        }
+
+        async function ipFallback() {
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                if(data.latitude) await updateUI(data.latitude, data.longitude);
+                else await updateUI(11.4128, 77.9654); 
+            } catch(e) { await updateUI(11.4128, 77.9654); }
+        }
+
+        async function updateUI(lat, lon) {
+            try {
+                const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                const weatherData = await weatherRes.json();
+                currentTemp = Math.round(weatherData.current_weather.temperature);
+                
+                const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+                const geoData = await geoRes.json();
+                
+                document.getElementById('topTemp').innerText = currentTemp + "°C";
+                const loc = geoData.address.village || geoData.address.suburb || geoData.address.city || "Field Area";
+                document.getElementById('locationName').innerText = `📍 ${loc}, ${geoData.address.state || 'Tamil Nadu'}`;
+                document.getElementById('liveDate').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                
+                if (!map) {
+                    map = L.map('map').setView([lat, lon], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                    marker = L.marker([lat, lon]).addTo(map);
+                } else {
+                    map.setView([lat, lon], 13);
+                    marker.setLatLng([lat, lon]);
+                }
+
+                document.getElementById('analyzeBtn').disabled = false;
+                document.getElementById('analyzeBtn').innerText = "⚡ RUN LIVE ANALYSIS";
+                checkExistingPlan();
+            } catch (e) { console.error(e); }
+        }
+
+        // --- PLAN LOCKING LOGIC ---
+        function fixInputData() { 
+            if(currentMatch && confirm("Lock plan?")) { 
+                localStorage.setItem('agrotech_plan', JSON.stringify(currentMatch)); 
+                checkExistingPlan(); 
+            } 
+        }
+        
+        function fixCrop(data) { 
+            if(confirm("Fix this recommendation?")) { 
+                localStorage.setItem('agrotech_plan', JSON.stringify(data)); 
+                saveToHistory(data.Soil_Type, data.Crop_Name, data.Yield_Prediction_kg, data.Estimated_Profit);
+                checkExistingPlan(); 
+            } 
+        }
+
+        function checkExistingPlan() {
+            const saved = localStorage.getItem('agrotech_plan');
+            if(saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('searchMode').style.display = 'none';
+                document.getElementById('lockedView').style.display = 'block';
+                document.getElementById('activeCropDisplay').innerText = data.Crop_Name;
+                document.getElementById('fixCurrentBtn').style.display = 'none';
+                document.getElementById('recommendationSection').style.display = 'none';
+                updateResultsUI(data);
+            }
+        }
+
+        function resetPlan() { 
+            if(confirm("Clear current plan and start over?")) { 
+                localStorage.removeItem('agrotech_plan'); 
+                location.reload(); 
+            } 
+        }
+
+        function bindCropInputEvents() {
+            const cropInput = document.getElementById('cropInput');
+            const cropDropdown = document.getElementById('cropDropdown');
+            cropInput.addEventListener('input', () => {
+                const query = cropInput.value.toLowerCase();
+                const matches = cropNames.filter(n => n.toLowerCase().includes(query)).slice(0, 10);
+                cropDropdown.innerHTML = matches.map(m => `<div>${m}</div>`).join('');
+                cropDropdown.hidden = matches.length === 0;
+                Array.from(cropDropdown.children).forEach(child => {
+                    child.onclick = () => { cropInput.value = child.innerText; cropDropdown.hidden = true; };
+                });
+            });
+        }
+    </script>
+</body>
+</html>

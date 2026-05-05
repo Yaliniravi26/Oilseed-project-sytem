@@ -1,0 +1,48 @@
+:root {
+    --bg-dark: #061609;
+    --sidebar-green: #0b2210;
+    --emerald-accent: #15f3bb;
+    --text-light: #ecfdf5;
+    --glass: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(16, 185, 129, 0.2);
+}
+
+* { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+body { margin: 0; background: var(--bg-dark); color: var(--text-light); overflow-x: hidden; }
+
+/* REUSABLE CLASSES */
+.glass-panel { background: var(--glass); backdrop-filter: blur(15px); border-radius: 20px; padding: 25px; border: 1px solid var(--card-border); margin-bottom: 25px; }
+.btn { background: var(--emerald-accent); color: #000; padding: 15px; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+.btn:hover { opacity: 0.8; transform: translateY(-2px); }
+.agro-input { width: 100%; padding: 12px; background: #000; color: white; border-radius: 10px; border: 1px solid var(--card-border); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--emerald-accent); border-radius: 10px; }
+body {
+            /* Web-based high-quality image with a dark overlay */
+            background: linear-gradient(rgba(2, 10, 4, 0.8), rgba(2, 10, 4, 0.8)), 
+                        url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            
+            color: var(--text-light);
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* Update your card style for a better glass effect against the background */
+        .zone-card {
+            background: rgba(6, 22, 9, 0.7); /* Slightly more transparent */
+            backdrop-filter: blur(12px); /* Frosted glass effect */
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AGROTECH - History Log</title>
+    <style>
+        :root {
+            --emerald: #15f3bb;
+            --glass: rgba(6, 22, 9, 0.95);
+        }
+
+        body {
+            background: #020a04;
+            color: #ecfdf5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 40px;
+            margin: 0;
+            background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1464226184884-fa280b87c399?q=80&w=2070');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: var(--glass);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            max-width: 1000px;
+            margin: 0 auto;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--emerald);
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            color: var(--emerald);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            padding: 15px;
+            border-bottom: 2px solid rgba(21, 243, 187, 0.3);
+            text-align: left;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background: rgba(21, 243, 187, 0.05);
+        }
+
+        .profit-text { color: #f3c615; font-weight: bold; font-family: monospace; font-size: 1rem; }
+        .soil-text { color: var(--emerald); font-weight: 500; }
+        .time-text { opacity: 0.6; font-size: 0.8rem; }
+
+        .clear-btn {
+            background: rgba(255, 77, 77, 0.1);
+            border: 1px solid #ff4d4d;
+            color: #ff4d4d;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            display: block;
+            margin: 20px auto 0;
+        }
+
+        .clear-btn:hover {
+            background: #ff4d4d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div style="max-width: 1000px; margin: 0 auto;">
+        <h1>📜 Field Analysis History</h1>
+
+        <div class="glass-panel">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Soil Type</th>
+                        <th>Crop Name</th>
+                        <th>Yield Prediction</th>
+                        <th>Estimated Profit</th>
+                    </tr>
+                </thead>
+                <tbody id="logTable">
+                    </tbody>
+            </table>
+            
+            <div id="noData" style="display:none; text-align:center; padding: 60px; opacity: 0.5;">
+                <p style="font-size: 1.2rem;">No history found.</p>
+                <p>Perform a 'Live Analysis' on the Home Dashboard to see logs here.</p>
+            </div>
+            
+            <button id="clearBtn" class="clear-btn" onclick="clearLogs()">
+                🗑️ Clear All History
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function loadLogs() {
+            const logs = JSON.parse(localStorage.getItem('agro_logs') || '[]');
+            const tableBody = document.getElementById('logTable');
+            const noData = document.getElementById('noData');
+            const clearBtn = document.getElementById('clearBtn');
+
+            if (logs.length === 0) {
+                noData.style.display = 'block';
+                tableBody.innerHTML = '';
+                clearBtn.style.display = 'none';
+                return;
+            }
+
+            noData.style.display = 'none';
+            clearBtn.style.display = 'block';
+            
+            tableBody.innerHTML = logs.map(l => `
+                <tr>
+                    <td class="time-text">${l.time}</td>
+                    <td class="soil-text">${l.soil}</td>
+                    <td><b>${l.crop}</b></td>
+                    <td>${l.yield || '0'} kg</td>
+                    <td class="profit-text">₹${l.profit || '0'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function clearLogs() {
+            if(confirm("Are you sure you want to delete all analysis history? This cannot be undone.")) {
+                localStorage.removeItem('agro_logs');
+                loadLogs();
+            }
+        }
+
+        // Page refresh/load aagum pothu data-vai kaata
+        window.onload = loadLogs;
+    </script>
+</body>
+</html>
